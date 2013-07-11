@@ -12,10 +12,21 @@ class TestBase(unittest.TestCase):
 
     def setUp(self):
         shutil.rmtree(test_database_path, ignore_errors=True)
+        
+    def create_product_with_url(self, product_url):
+        return Product(url=product_url, \
+                       title='product title', \
+                       price='10.00', \
+                       description='product desc', \
+                       image_url='product image url')
+
+class SinglePageTests(TestBase):
+
+    def setUp(self):
+        super(SinglePageTests, self).setUp()
         self.repository = ProductRepository(test_database_path)
 
-class NoProductsTest(TestBase):
-
+class NoProductsTest(SinglePageTests):
 
     def testItShouldReturnEmptyResult(self):
         result = self.repository.search('no such product')
@@ -23,14 +34,10 @@ class NoProductsTest(TestBase):
         self.assertEquals(result.page_count, 0)
         self.assertEquals(result.products, [])
 
-class OneProductTest(TestBase):
+class OneProductTest(SinglePageTests):
 
     def testItShouldReturnMatchingProduct(self):
-        expectedProduct = Product(url='product url', \
-                                  title='prodict title', \
-                                  price='10.00', \
-                                  description='product desc', \
-                                  image_url='product image url')
+        expectedProduct = self.create_product_with_url('product url')
 
         self.repository.add_product(expectedProduct)
 
@@ -41,9 +48,43 @@ class OneProductTest(TestBase):
     
         self.assertEquals(result.products[0], expectedProduct)
 
-class ManyProductsTest(TestBase):
-    pass
+class ManyProductsTest(SinglePageTests):
+    
+    def testItShouldReturnManyProducts(self):
+        product1 = self.create_product_with_url('product url')
+        product2 = self.create_product_with_url('product2 url')
 
+        self.repository.add_product(product1)
+        self.repository.add_product(product2)
+
+        result = self.repository.search('product')
+
+        self.assertEquals(result.page_count, 1)
+        self.assertEquals(len(result.products), 2)
+    
+        self.assertTrue(product1 in result.products)
+        self.assertTrue(product2 in result.products)
+
+class ManyPagesOfProductsTest(TestBase):
+
+    def setUp(self):
+        super(ManyPagesOfProductsTest, self).setUp()
+        self.repository = ProductRepository(test_database_path, page_size = 1)
+
+
+    def testItShouldReturnPage1Product(self):
+        product1 = self.create_product_with_url('product url')
+        product2 = self.create_product_with_url('product2 url')
+
+        self.repository.add_product(product1)
+        self.repository.add_product(product2)
+
+        result = self.repository.search('product')
+
+        self.assertEquals(result.page_count, 2)
+        self.assertEquals(len(result.products), 1)
+    
+# TODO: AND searched
 
 
 if __name__ == '__main__':

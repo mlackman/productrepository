@@ -22,10 +22,12 @@ class Product(object):
 
 class ProductRepository(object):
 
-    def __init__(self, database_path):
+    def __init__(self, database_path, page_size = None):
         """Construcst ProductRepository
-        database_path - Path to the database"""
+        database_path - Path to the database
+        page_size - Number products on single page"""
         self._db = xapian.WritableDatabase(database_path, xapian.DB_CREATE_OR_OPEN)
+        self._page_size = page_size or 10
         
     def add_product(self, product):
         """Adds product to repository"""
@@ -46,6 +48,9 @@ class ProductRepository(object):
         doc.add_boolean_term(idterm)
         self._db.replace_document(idterm, doc)
 
+    def _create_stem(self):
+        return xapian.Stem("fi")
+
 
     def search(self, search_words):
         """Searches database with given words
@@ -62,14 +67,26 @@ class ProductRepository(object):
         enquire.set_query(query)
 
         offset = 0
-        pagesize = 10
-        matches = enquire.get_mset(offset, pagesize)
+        matches = enquire.get_mset(offset, self._page_size)
         result = SearchResult()
-        if len(matches) == 1:
-            result.page_count = 1
-            product = Product(**json.loads(matches[0].document.get_data()))
-            result.products = [product]
+        result.page_count = self._get_page_count(matches)
+        
+
+        for match in matches:
+            product = self._create_product(match)
+            result.products.append(product)
         return result
 
-    def _create_stem(self):
-        return xapian.Stem("fi")
+    def _create_product(self, match):
+        return Product(**json.loads(match.document.get_data()))
+
+    def _get_page_count(self, matches):
+        page_count = 0
+        estimated_matches = int(matches.get_matches_estimated())
+        if len(matches) > 0:
+            if estimated_matches >= self._page_size:
+                page_count = estimated_matches / self._page_size
+            else:
+                page_count = 1
+        return page_count
+
