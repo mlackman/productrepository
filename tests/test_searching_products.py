@@ -71,20 +71,39 @@ class ManyPagesOfProductsTest(TestBase):
         super(ManyPagesOfProductsTest, self).setUp()
         self.repository = ProductRepository(test_database_path, page_size = 1)
 
+        self.product1 = self.create_product_with_url('product url')
+        self.product2 = self.create_product_with_url('product2 url')
+        self.repository.add_product(self.product1)
+        self.repository.add_product(self.product2)
 
-    def testItShouldReturnPage1Product(self):
-        product1 = self.create_product_with_url('product url')
-        product2 = self.create_product_with_url('product2 url')
-
-        self.repository.add_product(product1)
-        self.repository.add_product(product2)
-
+    def testItShouldReturnProducts(self):
         result = self.repository.search('product')
 
         self.assertEquals(result.page_count, 2)
         self.assertEquals(len(result.products), 1)
+
+    def testItShouldReturnPage2Product(self):
+        result = self.repository.search('product', 1)
+
+        self.assertEquals(result.page_count, 2)
+        self.assertEquals(len(result.products), 1)
+
+    def testItReturnsProducts(self):
+        result = self.repository.search('product', 0)
+        page1_product = result.products[0]
+        
+        result = self.repository.search('product', 1)
+        page2_product = result.products[0]
+        
+        self.assertFalse(page1_product == page2_product)
+       
+
+
+    # TODO: Test finding from page that does not exists.
+
     
 # TODO: AND searched
+
 
 
 if __name__ == '__main__':

@@ -52,9 +52,11 @@ class ProductRepository(object):
         return xapian.Stem("fi")
 
 
-    def search(self, search_words):
+    def search(self, search_words, page_index=None):
         """Searches database with given words
-        search_words - Search string"""
+        search_words - Search string
+        page_index - from which page the results starts from. 0 is first page"""
+        page_index = page_index or 0
         queryparser = xapian.QueryParser()
         queryparser.set_stemmer(self._create_stem())
         queryparser.set_stemming_strategy(queryparser.STEM_ALL)
@@ -66,12 +68,11 @@ class ProductRepository(object):
         enquire = xapian.Enquire(self._db)
         enquire.set_query(query)
 
-        offset = 0
+        offset = page_index * self._page_size
         matches = enquire.get_mset(offset, self._page_size)
         result = SearchResult()
         result.page_count = self._get_page_count(matches)
         
-
         for match in matches:
             product = self._create_product(match)
             result.products.append(product)
