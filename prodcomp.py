@@ -1,19 +1,75 @@
+import xapian
+import json
 
 class SearchResult(object):
     
     def __init__(self):
         self.page_count = 0
-        self.products = []
+        self.products = []   
+
+class Product(object):
+
+    def __init__(self, title, url, image_url, description, price):
+        self.title = title
+        self.url = url
+        self.image_url = image_url
+        self.description = description
+        self.price = price
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
 
 
-class ProductCompare(object):
+class ProductRepository(object):
 
     def __init__(self, database_path):
-        """Constructs ProductCompare object.
+        """Construcst ProductRepository
         database_path - Path to the database"""
-        pass
+        self._db = xapian.WritableDatabase(database_path, xapian.DB_CREATE_OR_OPEN)
+        
+    def add_product(self, product):
+        """Adds product to repository"""
+        # Set up a TermGenerator that we'll use in indexing.
+        termgenerator = xapian.TermGenerator()
+        termgenerator.set_stemmer(self._create_stem())
+
+        # We make a document and tell the term generator to use this.
+        doc = xapian.Document()
+        termgenerator.set_document(doc)
+
+        termgenerator.index_text(product.title)
+        termgenerator.increase_termpos()
+        termgenerator.index_text(product.description)
+
+        doc.set_data(json.dumps(product.__dict__))
+        idterm = "Q" + product.url
+        doc.add_boolean_term(idterm)
+        self._db.replace_document(idterm, doc)
+
 
     def search(self, search_words):
         """Searches database with given words
         search_words - Search string"""
-        return SearchResult()
+        queryparser = xapian.QueryParser()
+        queryparser.set_stemmer(self._create_stem())
+        queryparser.set_stemming_strategy(queryparser.STEM_ALL)
+  
+        # And parse the query
+        query = queryparser.parse_query(search_words)
+
+        # Use an Enquire object on the database to run the query
+        enquire = xapian.Enquire(self._db)
+        enquire.set_query(query)
+
+        offset = 0
+        pagesize = 10
+        matches = enquire.get_mset(offset, pagesize)
+        result = SearchResult()
+        if len(matches) == 1:
+            result.page_count = 1
+            product = Product(**json.loads(matches[0].document.get_data()))
+            result.products = [product]
+        return result
+
+    def _create_stem(self):
+        return xapian.Stem("fi")
