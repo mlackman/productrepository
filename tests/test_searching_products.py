@@ -8,13 +8,13 @@ from prodcomp import Product, ProductRepository
 
 test_database_path = 'testdb'
 
-class AcceptanceTestBase(unittest.TestCase):
+class TestBase(unittest.TestCase):
 
     def setUp(self):
         shutil.rmtree(test_database_path, ignore_errors=True)
         self.repository = ProductRepository(test_database_path)
 
-class NoProductsAcceptanceTest(AcceptanceTestBase):
+class NoProductsTest(TestBase):
 
 
     def testItShouldReturnEmptyResult(self):
@@ -23,7 +23,7 @@ class NoProductsAcceptanceTest(AcceptanceTestBase):
         self.assertEquals(result.page_count, 0)
         self.assertEquals(result.products, [])
 
-class OneProductAcceptanceTest(AcceptanceTestBase):
+class OneProductTest(TestBase):
 
     def testItShouldReturnMatchingProduct(self):
         expectedProduct = Product(url='product url', \
@@ -40,6 +40,9 @@ class OneProductAcceptanceTest(AcceptanceTestBase):
         self.assertEquals(len(result.products), 1)
     
         self.assertEquals(result.products[0], expectedProduct)
+
+class ManyProductsTest(TestBase):
+    pass
 
 
 
