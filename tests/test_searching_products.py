@@ -15,10 +15,13 @@ class TestBase(unittest.TestCase):
         
     def create_product_with_url(self, product_url):
         return Product(url=product_url, \
-                       title='product title', \
+                       title='heading text', \
                        price='10.00', \
                        description='product desc', \
-                       image_url='product image url')
+                       image_url='image url')
+
+    def create_product(self):
+        return self.create_product_with_url('product url')
 
 class SinglePageTests(TestBase):
 
@@ -103,8 +106,36 @@ class ManyPagesOfProductsTest(TestBase):
         self.assertEquals(result.page_count, 0)
 
 
+class ProductTitleAndDescriptionAreIndexedTest(SinglePageTests):
+
+    def setUp(self):
+        super(ProductTitleAndDescriptionAreIndexedTest, self).setUp()
+
+    def testItShouldFindProductFromTitleFirstWord(self):
+        self.repository.add_product(self.create_product())
+        result = self.repository.search('heading')
+        self.assertEquals(len(result.products), 1)
+
+    def testItShouldFindProductFromTitleSecondWord(self):
+        self.repository.add_product(self.create_product())
+        result = self.repository.search('text')
+        self.assertEquals(len(result.products), 1)
+
+
+"""
+class OnlyCompleteMatchIsReturnedTest(SinglePageTests):
+
+    def setUp(self):
+        super(OnlyCompleteMatchIsReturnedTest, self).setUp()
+        self.create_product_with_url('product url')
+
+    def testItReturnsOnlyCompleteMatch(self):
+        result = self.repository.search('product title something')
+        self.assertEquals(len(result.products), 0)"""
+
     
-# TODO: AND searched
+# TODO: price sorting
+# TODO: Support for many databases
 
 
 

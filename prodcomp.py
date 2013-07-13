@@ -38,12 +38,9 @@ class ProductRepository(object):
         # We make a document and tell the term generator to use this.
         doc = xapian.Document()
         termgenerator.set_document(doc)
-
-        termgenerator.index_text(product.title)
-        termgenerator.increase_termpos()
-        termgenerator.index_text(product.description)
-
-        doc.set_data(json.dumps(product.__dict__))
+        termgenerator.index_text(unicode(product.title))
+        termgenerator.index_text(unicode(product.description))
+        doc.set_data(unicode(json.dumps(product.__dict__)))
         idterm = "Q" + product.url
         doc.add_boolean_term(idterm)
         self._db.replace_document(idterm, doc)
