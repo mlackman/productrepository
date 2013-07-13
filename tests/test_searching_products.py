@@ -110,28 +110,31 @@ class ProductTitleAndDescriptionAreIndexedTest(SinglePageTests):
 
     def setUp(self):
         super(ProductTitleAndDescriptionAreIndexedTest, self).setUp()
+        self.repository.add_product(self.create_product())
 
     def testItShouldFindProductFromTitleFirstWord(self):
-        self.repository.add_product(self.create_product())
         result = self.repository.search('heading')
         self.assertEquals(len(result.products), 1)
 
     def testItShouldFindProductFromTitleSecondWord(self):
-        self.repository.add_product(self.create_product())
         result = self.repository.search('text')
         self.assertEquals(len(result.products), 1)
 
+    def testItShouldFindProductFromDescriptionsSecondWord(self):
+        result = self.repository.search('desc')
+        self.assertEquals(len(result.products), 1)
 
-"""
+
+
 class OnlyCompleteMatchIsReturnedTest(SinglePageTests):
 
     def setUp(self):
         super(OnlyCompleteMatchIsReturnedTest, self).setUp()
-        self.create_product_with_url('product url')
+        self.repository.add_product(self.create_product())
 
     def testItReturnsOnlyCompleteMatch(self):
-        result = self.repository.search('product title something')
-        self.assertEquals(len(result.products), 0)"""
+        result = self.repository.search('heading text worm')
+        self.assertEquals(len(result.products), 0)
 
     
 # TODO: price sorting

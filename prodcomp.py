@@ -59,6 +59,7 @@ class ProductRepository(object):
         queryparser.set_stemming_strategy(queryparser.STEM_ALL)
   
         # And parse the query
+        search_words = ' AND '.join(search_words.split())
         query = queryparser.parse_query(search_words)
 
         # Use an Enquire object on the database to run the query
