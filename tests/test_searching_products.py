@@ -96,10 +96,12 @@ class ManyPagesOfProductsTest(TestBase):
         page2_product = result.products[0]
         
         self.assertFalse(page1_product == page2_product)
-       
 
+    def testItShouldReturnNoProductsFromPageThatDoesNotExists(self):
+        result = self.repository.search('product', 2)        
+        self.assertEquals(result.products, [])
+        self.assertEquals(result.page_count, 0)
 
-    # TODO: Test finding from page that does not exists.
 
     
 # TODO: AND searched
