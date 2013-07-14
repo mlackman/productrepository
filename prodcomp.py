@@ -45,8 +45,16 @@ class ProductRepository(object):
         return xapian.WritableDatabase(database_path, xapian.DB_CREATE_OR_OPEN)
         
     def add_product(self, product, database_path=None):
-        """Adds product to repository"""
+        """Adds product to repository.
+        product - Product to be added to database
+        database_path - Path of the database where product is added. Default: None
+        When repository has been created with many database paths then database_path must
+        be defined."""
         # Set up a TermGenerator that we'll use in indexing.
+        if len(self._databases) > 1:
+            assert database_path != None, \
+                "With many databases you must identify the database where product is added"
+
         termgenerator = xapian.TermGenerator()
         termgenerator.set_stemmer(self._create_stem())
 
@@ -67,10 +75,10 @@ class ProductRepository(object):
 
         db.replace_document(idterm, doc)
 
-    def add_products(self, products):
+    def add_products(self, products, database_path=None):
         """Add list of products to repository"""
         for product in products:
-            self.add_product(product)
+            self.add_product(product, database_path)
 
     def _create_stem(self):
         return xapian.Stem("fi")

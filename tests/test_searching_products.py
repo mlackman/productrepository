@@ -171,8 +171,9 @@ class ManyDatabasesTest(TestBase):
         result = self.repository.search('heading text')
         self.assertEquals(len(result.products), 2)
 
-# TODO: exeption when adding product to multidatabase without database path
-    
+    def testItShouldRaiseExceptionWhenAddingProductWithoutIdentifyingDatabase(self):
+        with self.assertRaises(AssertionError) as cm:
+            self.repository.add_product(self.create_product())
 
 
 if __name__ == '__main__':
