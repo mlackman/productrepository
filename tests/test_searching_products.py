@@ -20,8 +20,12 @@ class TestBase(unittest.TestCase):
                        description='product desc', \
                        image_url='image url')
 
-    def create_product(self):
-        return self.create_product_with_url('product url')
+    def create_product(self, url=None, price=None):
+        url = url or 'product url'
+        product = self.create_product_with_url(url)
+        if price:
+            product.price = price
+        return product
 
 class SinglePageTests(TestBase):
 
@@ -126,18 +130,31 @@ class ProductTitleAndDescriptionAreIndexedTest(SinglePageTests):
 
 
 
-class OnlyCompleteMatchIsReturnedTest(SinglePageTests):
+class OnlyCompleteMatchesAreReturnedTest(SinglePageTests):
 
     def setUp(self):
-        super(OnlyCompleteMatchIsReturnedTest, self).setUp()
+        super(OnlyCompleteMatchesAreReturnedTest, self).setUp()
         self.repository.add_product(self.create_product())
 
     def testItReturnsOnlyCompleteMatch(self):
         result = self.repository.search('heading text worm')
         self.assertEquals(len(result.products), 0)
 
+class SortingByPriceTest(SinglePageTests):
+
+    def testItSortsProductsByPrice(self):
+        p1 = self.create_product(url='url1', price='50.0')
+        p2 = self.create_product(url='url2', price='45.0')
+        p3 = self.create_product(url='url3', price='40.0')
+        self.repository.add_products([p1, p2, p3])
+        
+        result = self.repository.search('heading text', sort_by_price=True)
+        self.assertEquals(len(result.products), 3)
+        self.assertEquals(result.products[0], p3)
+        self.assertEquals(result.products[1], p2)
+        self.assertEquals(result.products[2], p1)
+
     
-# TODO: price sorting
 # TODO: Support for many databases
 
 

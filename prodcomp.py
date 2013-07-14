@@ -41,19 +41,29 @@ class ProductRepository(object):
         termgenerator.index_text(unicode(product.title))
         termgenerator.index_text(unicode(product.description))
         doc.set_data(unicode(json.dumps(product.__dict__)))
+        doc.add_value(0, xapian.sortable_serialise(float(product.price)))
+
         idterm = "Q" + product.url
         doc.add_boolean_term(idterm)
         self._db.replace_document(idterm, doc)
+
+    def add_products(self, products):
+        """Add list of products to repository"""
+        for product in products:
+            self.add_product(product)
 
     def _create_stem(self):
         return xapian.Stem("fi")
 
 
-    def search(self, search_words, page_index=None):
+    def search(self, search_words, page_index=None, sort_by_price=None):
         """Searches database with given words
         search_words - Search string
-        page_index - from which page the results starts from. 0 is first page"""
+        page_index - from which page the results starts from. 0 is first page
+        sort_by_price - Are products sorted by price or not.
+        """
         page_index = page_index or 0
+        sort_by_price = sort_by_price or False
         queryparser = xapian.QueryParser()
         queryparser.set_stemmer(self._create_stem())
         queryparser.set_stemming_strategy(queryparser.STEM_ALL)
@@ -65,6 +75,8 @@ class ProductRepository(object):
         # Use an Enquire object on the database to run the query
         enquire = xapian.Enquire(self._db)
         enquire.set_query(query)
+        if sort_by_price:
+            enquire.set_sort_by_value(0, False)
 
         offset = page_index * self._page_size
         matches = enquire.get_mset(offset, self._page_size)
