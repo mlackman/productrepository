@@ -171,6 +171,7 @@ class ManyDatabasesTest(TestBase):
         result = self.repository.search('heading text')
         self.assertEquals(len(result.products), 2)
 
+# TODO: exeption when adding product to multidatabase without database path
     
 
 
