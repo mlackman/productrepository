@@ -24,12 +24,23 @@ class ProductRepository(object):
 
     def __init__(self, database_path, page_size = None):
         """Construcst ProductRepository
-        database_path - Path to the database
+        database_path - Path to the database or list of database paths
         page_size - Number products on single page"""
-        self._db = xapian.WritableDatabase(database_path, xapian.DB_CREATE_OR_OPEN)
+        if isinstance(database_path, list):
+            self._db = xapian.WritableDatabase()
+            self._databases = {}
+            for db_path in database_path:
+                database = self._create_or_open_database(db_path)
+                self._databases[db_path] = database
+                self._db.add_database(database)
+        else:
+            self._db = self._create_or_open_database(database_path)
         self._page_size = page_size or 10
+
+    def _create_or_open_database(self, database_path):
+        return xapian.WritableDatabase(database_path, xapian.DB_CREATE_OR_OPEN)
         
-    def add_product(self, product):
+    def add_product(self, product, database_path=None):
         """Adds product to repository"""
         # Set up a TermGenerator that we'll use in indexing.
         termgenerator = xapian.TermGenerator()
@@ -45,7 +56,12 @@ class ProductRepository(object):
 
         idterm = "Q" + product.url
         doc.add_boolean_term(idterm)
-        self._db.replace_document(idterm, doc)
+
+        db = self._db
+        if database_path:
+            db = self._databases[database_path]
+
+        db.replace_document(idterm, doc)
 
     def add_products(self, products):
         """Add list of products to repository"""

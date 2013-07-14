@@ -7,11 +7,13 @@ sys.path.insert(0, join(pardir))
 from prodcomp import Product, ProductRepository
 
 test_database_path = 'testdb'
+other_test_database_path = 'testdb2'
 
 class TestBase(unittest.TestCase):
 
     def setUp(self):
         shutil.rmtree(test_database_path, ignore_errors=True)
+        shutil.rmtree(other_test_database_path, ignore_errors=True)
         
     def create_product_with_url(self, product_url):
         return Product(url=product_url, \
@@ -154,9 +156,22 @@ class SortingByPriceTest(SinglePageTests):
         self.assertEquals(result.products[1], p2)
         self.assertEquals(result.products[2], p1)
 
-    
-# TODO: Support for many databases
 
+class ManyDatabasesTest(TestBase):
+
+    def setUp(self):
+        super(ManyDatabasesTest, self).setUp()
+        self.repository = ProductRepository([test_database_path, other_test_database_path])
+    
+    def testItShouldFindProductsFromDifferentDatabases(self):
+        p1 = self.create_product()
+        self.repository.add_product(p1, test_database_path)
+        self.repository.add_product(p1, other_test_database_path)
+
+        result = self.repository.search('heading text')
+        self.assertEquals(len(result.products), 2)
+
+    
 
 
 if __name__ == '__main__':
