@@ -4,7 +4,7 @@ import shutil
 import unittest
 
 sys.path.insert(0, join(pardir))
-from prodcomp import Product, ProductRepository
+from productrepository import Product, ProductRepository
 
 test_database_path = 'testdb'
 other_test_database_path = 'testdb2'
